@@ -13,8 +13,9 @@ export class CommentsService {
         const savedComment = await comment.save();
         const populatedComment = await savedComment.populate('author', 'username avatarUrl');
 
-        // Broadcast new comment to the specific post room
-        webSocketService.broadcast('new_comment', populatedComment, populatedComment.post.toString());
+        // Broadcast new comment to the specific post room (standardized with 'post_' prefix)
+        const postId = populatedComment.post.toString();
+        webSocketService.broadcast('new_comment', populatedComment, `post_${postId}`);
 
         return populatedComment;
     }
@@ -35,7 +36,8 @@ export class CommentsService {
         const updatedComment = await comment.save();
 
         // Broadcast updated comment to the specific post room
-        webSocketService.broadcast('update_comment', updatedComment, updatedComment.post.toString());
+        const postId = updatedComment.post.toString();
+        webSocketService.broadcast('update_comment', updatedComment, `post_${postId}`);
 
         return updatedComment;
     }
@@ -49,7 +51,7 @@ export class CommentsService {
         await this.deleteRecursive(id);
 
         // Broadcast deleted comment to the specific post room
-        webSocketService.broadcast('delete_comment', { id }, postId);
+        webSocketService.broadcast('delete_comment', { id }, `post_${postId}`);
     }
 
     private async deleteRecursive(commentId: string): Promise<void> {
@@ -78,7 +80,8 @@ export class CommentsService {
         const updatedComment = await (await comment.populate('author', 'username avatarUrl')).populate('likes', 'username');
 
         // Broadcast updated (liked) comment to the specific post room
-        webSocketService.broadcast('update_comment', updatedComment, updatedComment.post.toString());
+        const postId = updatedComment.post.toString();
+        webSocketService.broadcast('update_comment', updatedComment, `post_${postId}`);
 
         return updatedComment;
     }

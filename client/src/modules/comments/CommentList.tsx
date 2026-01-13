@@ -120,8 +120,11 @@ const CommentList = ({ postId }: CommentListProps) => {
             <CreateComment
                 postId={postId}
                 onCommentCreated={(newComment) => {
-                    setComments(prev => prev ? [newComment, ...prev] : [newComment]);
-                    refetch();
+                    setComments(prev => {
+                        if (!prev) return [newComment];
+                        if (prev.some(c => c._id === newComment._id)) return prev;
+                        return [newComment, ...prev];
+                    });
                 }}
                 addOptimisticAction={addOptimisticAction}
             />
@@ -133,7 +136,14 @@ const CommentList = ({ postId }: CommentListProps) => {
                         comment={comment}
                         allComments={sortedComments}
                         postId={postId}
-                        onUpdate={(updatedData) => setComments(prev => prev ? prev.map(c => c._id === updatedData._id ? updatedData : c) : prev)}
+                        onUpdate={(updatedData) => setComments(prev => {
+                            if (!prev) return [updatedData];
+                            const exists = prev.some(c => c._id === updatedData._id);
+                            if (exists) {
+                                return prev.map(c => c._id === updatedData._id ? { ...c, ...updatedData } : c);
+                            }
+                            return [updatedData, ...prev];
+                        })}
                         onDelete={(id) => setComments(prev => prev ? prev.filter(c => c._id !== id) : prev)}
                         addOptimisticAction={addOptimisticAction}
                     />

@@ -12,9 +12,8 @@ export class PostsService {
         const savedPost = await post.save();
         const populatedPost = await savedPost.populate('author', 'username avatarUrl');
 
-        // Broadcast new post globally or to a feed room
-        webSocketService.broadcast('new_post', populatedPost);
-
+        // Broadcast new post to the feed room
+        webSocketService.broadcast('new_post', populatedPost, 'feed');
         return populatedPost;
     }
 
@@ -41,8 +40,8 @@ export class PostsService {
 
         const updatedPost = await post.save();
 
-        // Broadcast updated post
-        webSocketService.broadcast('update_post', updatedPost);
+        // Broadcast updated post to the feed room
+        webSocketService.broadcast('update_post', updatedPost, 'feed');
 
         return updatedPost;
     }
@@ -54,8 +53,8 @@ export class PostsService {
 
         await Post.findByIdAndDelete(id);
 
-        // Broadcast deleted post
-        webSocketService.broadcast('delete_post', { id });
+        // Broadcast deleted post to the feed room
+        webSocketService.broadcast('delete_post', { id }, 'feed');
     }
 
     async toggleLike(postId: string, userId: string): Promise<IPost> {
@@ -76,8 +75,8 @@ export class PostsService {
         // Re-populate to return updated state
         const updatedPost = await (await post.populate('author', 'username avatarUrl')).populate('likes', 'username');
 
-        // Broadcast updated post (for likes)
-        webSocketService.broadcast('update_post', updatedPost);
+        // Broadcast updated post (for likes) to the feed room
+        webSocketService.broadcast('update_post', updatedPost, 'feed');
 
         return updatedPost;
     }

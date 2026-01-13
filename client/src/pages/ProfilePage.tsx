@@ -128,7 +128,14 @@ const ProfilePage = () => {
                             key={post._id}
                             post={post}
                             addOptimisticAction={addOptimisticAction}
-                            onUpdate={(updatedData) => setAllPosts(prev => prev ? prev.map(p => p._id === updatedData._id ? updatedData : p) : prev)}
+                            onUpdate={(updatedData) => setAllPosts(prev => {
+                                if (!prev) return [updatedData];
+                                const exists = prev.some(p => p._id === updatedData._id);
+                                if (exists) {
+                                    return prev.map(p => p._id === updatedData._id ? { ...p, ...updatedData } : p);
+                                }
+                                return [updatedData, ...prev];
+                            })}
                             onDelete={(id) => setAllPosts(prev => prev ? prev.filter(p => p._id !== id) : prev)}
                         />
                     ))

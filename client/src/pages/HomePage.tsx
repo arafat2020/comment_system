@@ -67,8 +67,11 @@ const Home = () => {
         <div className="home-container">
             <CreatePost
                 onPostCreated={(newPost) => {
-                    setPosts(prev => prev ? [newPost, ...prev] : [newPost]);
-                    refetch();
+                    setPosts(prev => {
+                        if (!prev) return [newPost];
+                        if (prev.some(p => p._id === newPost._id)) return prev;
+                        return [newPost, ...prev];
+                    });
                 }}
                 addOptimisticAction={addOptimisticAction}
             />
@@ -83,7 +86,14 @@ const Home = () => {
                             key={post._id}
                             post={post}
                             addOptimisticAction={addOptimisticAction}
-                            onUpdate={(updatedData) => setPosts(prev => prev ? prev.map(p => p._id === updatedData._id ? updatedData : p) : prev)}
+                            onUpdate={(updatedData) => setPosts(prev => {
+                                if (!prev) return [updatedData];
+                                const exists = prev.some(p => p._id === updatedData._id);
+                                if (exists) {
+                                    return prev.map(p => p._id === updatedData._id ? { ...p, ...updatedData } : p);
+                                }
+                                return [updatedData, ...prev];
+                            })}
                             onDelete={(id) => setPosts(prev => prev ? prev.filter(p => p._id !== id) : prev)}
                         />
                     ))
