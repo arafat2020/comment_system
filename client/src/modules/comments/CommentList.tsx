@@ -1,8 +1,8 @@
-import { useMemo, useCallback, useState } from 'react';
-import CommentItem from './CommentItem';
-import CreateComment from './CreateComment';
+import { useMemo, useCallback, useOptimistic, useState } from 'react';
 import useFetch from '../../hooks/useFetch';
 import useWebSocketRoom from '../../hooks/useWebSocketRoom';
+import CreateComment from './CreateComment';
+import CommentItem from './CommentItem';
 import Loader from '../../components/Loader';
 import ErrorMessage from '../../components/ErrorMessage';
 
@@ -13,7 +13,6 @@ interface CommentListProps {
 const CommentList = ({ postId }: CommentListProps) => {
     const [sortBy, setSortBy] = useState<'newest' | 'liked'>('newest');
 
-    // Use the custom useFetch hook
     const {
         data: comments,
         loading,
@@ -22,16 +21,14 @@ const CommentList = ({ postId }: CommentListProps) => {
         refetch
     } = useFetch<any[]>(`/comments/${postId}`);
 
-    // Handle incoming real-time messages
-    const handleWebSocketMessage = useCallback((type: string, data: any) => {
+    // Manage room connection state for UI feedback
+    const handleCommentMessage = useCallback((type: string, data: any) => {
         if (type === 'new_comment') {
-            if (data.post === postId) {
-                setComments(prev => {
-                    if (!prev) return [data];
-                    if (prev.find(c => c._id === data._id)) return prev;
-                    return [data, ...prev];
-                });
-            }
+            setComments(prev => {
+                if (!prev) return [data];
+                if (prev.find(c => c._id === data._id)) return prev;
+                return [data, ...prev];
+            });
         } else if (type === 'update_comment') {
             setComments(prev =>
                 prev ? prev.map(c => c._id === data._id ? { ...c, ...data } : c) : prev
@@ -41,35 +38,68 @@ const CommentList = ({ postId }: CommentListProps) => {
                 prev ? prev.filter(c => c._id !== data.id) : prev
             );
         }
-    }, [postId, setComments]);
+    }, [setComments]);
 
+    const { isConnected } = useWebSocketRoom(`post_${postId}`, handleCommentMessage);
 
-    // Use the custom useWebSocketRoom hook
-    const { isConnected } = useWebSocketRoom(postId, handleWebSocketMessage);
+    // React 19 useOptimistic for comments
+    const [optimisticComments, addOptimisticAction] = useOptimistic(
+        comments || [],
+        (state, action: { type: string; payload: any }) => {
+            switch (action.type) {
+                case 'add':
+                    return [action.payload, ...state];
+                case 'like':
+                    return state.map(c => {
+                        if (c._id === action.payload.commentId) {
+                            const newLikes = [...c.likes];
+                            const likeIndex = newLikes.findIndex((l: any) =>
+                                (typeof l === 'string' ? l : l._id) === action.payload.userId
+                            );
+                            if (likeIndex > -1) {
+                                newLikes.splice(likeIndex, 1);
+                            } else {
+                                newLikes.push({ _id: action.payload.userId, username: action.payload.username });
+                            }
+                            return { ...c, likes: newLikes };
+                        }
+                        return c;
+                    });
+                case 'delete':
+                    return state.filter(c => c._id !== action.payload.id);
+                case 'edit':
+                    return state.map(c => c._id === action.payload.id ? { ...c, content: action.payload.content } : c);
+                default:
+                    return state;
+            }
+        }
+    );
 
     const sortedComments = useMemo(() => {
-        if (!comments) return [];
-        return [...comments].sort((a, b) => {
+        if (!optimisticComments) return [];
+        return [...optimisticComments].sort((a, b) => {
             if (sortBy === 'newest') {
                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
             } else {
                 return (b.likes?.length || 0) - (a.likes?.length || 0);
             }
         });
-    }, [comments, sortBy]);
+    }, [optimisticComments, sortBy]);
 
-    // Only render root comments (those without parent)
     const rootComments = sortedComments.filter(c => !c.parentComment);
 
-    if (loading) return <Loader size="small" message="Loading comments..." />;
-    if (error) return <ErrorMessage message={error} onRetry={refetch} />;
+    if (loading) return <Loader message="Loading comments..." size="small" />;
+    if (error) return <ErrorMessage message={error} title="Failed to load comments" onRetry={refetch} />;
 
     return (
         <div className="comments-section">
             <div className="comments-header">
                 <div className="comments-status">
-                    <h3>Comments</h3>
-                    <span className={`status-dot ${isConnected ? 'online' : 'offline'}`} title={isConnected ? 'Real-time connected' : 'Disconnected'}></span>
+                    <h3>Comments ({optimisticComments.length})</h3>
+                    <span
+                        className={`status-dot ${isConnected ? 'online' : 'offline'}`}
+                        title={isConnected ? 'Real-time connected' : 'Disconnected'}
+                    ></span>
                 </div>
                 <div className="sort-controls">
                     <button
@@ -87,7 +117,14 @@ const CommentList = ({ postId }: CommentListProps) => {
                 </div>
             </div>
 
-            <CreateComment postId={postId} onCommentCreated={refetch} />
+            <CreateComment
+                postId={postId}
+                onCommentCreated={(newComment) => {
+                    setComments(prev => prev ? [newComment, ...prev] : [newComment]);
+                    refetch();
+                }}
+                addOptimisticAction={addOptimisticAction}
+            />
 
             <div className="comments-list">
                 {rootComments.map(comment => (
@@ -96,7 +133,9 @@ const CommentList = ({ postId }: CommentListProps) => {
                         comment={comment}
                         allComments={sortedComments}
                         postId={postId}
-                        onUpdate={refetch}
+                        onUpdate={(updatedData) => setComments(prev => prev ? prev.map(c => c._id === updatedData._id ? updatedData : c) : prev)}
+                        onDelete={(id) => setComments(prev => prev ? prev.filter(c => c._id !== id) : prev)}
+                        addOptimisticAction={addOptimisticAction}
                     />
                 ))}
             </div>

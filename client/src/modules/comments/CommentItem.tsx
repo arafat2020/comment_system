@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, startTransition } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { AiOutlineHeart, AiFillHeart, AiOutlineDelete, AiOutlineMessage, AiOutlineEdit } from 'react-icons/ai';
 import api from '../../services/api';
@@ -22,10 +22,12 @@ interface CommentItemProps {
     comment: Comment;
     allComments: Comment[];
     postId: string;
-    onUpdate: () => void;
+    onUpdate: (updatedData: any) => void;
+    onDelete: (id: string) => void;
+    addOptimisticAction?: (action: any) => void;
 }
 
-const CommentItem = ({ comment, allComments, postId, onUpdate }: CommentItemProps) => {
+const CommentItem = ({ comment, allComments, postId, onUpdate, onDelete, addOptimisticAction }: CommentItemProps) => {
     const { user } = useAuth();
     const API_URL = 'http://localhost:5000';
     const [isReplying, setIsReplying] = useState(false);
@@ -40,34 +42,61 @@ const CommentItem = ({ comment, allComments, postId, onUpdate }: CommentItemProp
         (typeof like === 'string' ? like : like._id) === user._id
     );
 
-    const handleLike = async () => {
-        try {
-            await api.put(`/comments/${comment._id}/like`);
-            onUpdate();
-        } catch (error) {
-            console.error('Failed to like comment', error);
-        }
-    };
+    const handleLike = () => {
+        if (!user || !addOptimisticAction) return;
 
-    const handleDelete = async () => {
-        if (confirm('Are you sure you want to delete this comment?')) {
+        startTransition(async () => {
+            addOptimisticAction({
+                type: 'like',
+                payload: {
+                    commentId: comment._id,
+                    userId: user._id,
+                    username: user.username
+                }
+            });
+
             try {
-                await api.delete(`/comments/${comment._id}`);
-                onUpdate();
+                const response = await api.put(`/comments/${comment._id}/like`);
+                onUpdate(response.data);
             } catch (error) {
-                console.error('Failed to delete comment', error);
+                console.error('Failed to like comment', error);
             }
+        });
+    };
+
+    const handleDelete = () => {
+        if (!addOptimisticAction) return;
+        if (confirm('Are you sure you want to delete this comment?')) {
+            startTransition(async () => {
+                addOptimisticAction({ type: 'delete', payload: { id: comment._id } });
+
+                try {
+                    await api.delete(`/comments/${comment._id}`);
+                    onDelete(comment._id);
+                } catch (error) {
+                    console.error('Failed to delete comment', error);
+                }
+            });
         }
     };
 
-    const handleEdit = async () => {
-        try {
-            await api.put(`/comments/${comment._id}`, { content: editContent });
+    const handleEdit = () => {
+        if (!addOptimisticAction) return;
+
+        startTransition(async () => {
+            addOptimisticAction({
+                type: 'edit',
+                payload: { id: comment._id, content: editContent }
+            });
             setIsEditing(false);
-            onUpdate();
-        } catch (error) {
-            console.error('Failed to edit comment', error);
-        }
+
+            try {
+                const response = await api.put(`/comments/${comment._id}`, { content: editContent });
+                onUpdate(response.data);
+            } catch (error) {
+                console.error('Failed to edit comment', error);
+            }
+        });
     };
 
     return (
@@ -140,8 +169,12 @@ const CommentItem = ({ comment, allComments, postId, onUpdate }: CommentItemProp
                             <CreateComment
                                 postId={postId}
                                 parentCommentId={comment._id}
-                                onCommentCreated={() => { setIsReplying(false); onUpdate(); }}
+                                onCommentCreated={(newComment) => {
+                                    setIsReplying(false);
+                                    onUpdate(newComment);
+                                }}
                                 onCancel={() => setIsReplying(false)}
+                                addOptimisticAction={addOptimisticAction}
                             />
                         </div>
                     )}
@@ -157,6 +190,8 @@ const CommentItem = ({ comment, allComments, postId, onUpdate }: CommentItemProp
                             allComments={allComments}
                             postId={postId}
                             onUpdate={onUpdate}
+                            onDelete={onDelete}
+                            addOptimisticAction={addOptimisticAction}
                         />
                     ))}
                 </div>

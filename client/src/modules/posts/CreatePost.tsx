@@ -1,11 +1,17 @@
-import { useState } from 'react';
+import { useState, startTransition } from 'react';
 import api from '../../services/api';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { BsImage, BsEmojiSmile } from 'react-icons/bs';
 import { AiOutlineClose } from 'react-icons/ai';
 
-const CreatePost = ({ onPostCreated }: { onPostCreated: () => void }) => {
+const CreatePost = ({
+    onPostCreated,
+    addOptimisticAction
+}: {
+    onPostCreated: (newPost: any) => void,
+    addOptimisticAction?: (payload: any) => void
+}) => {
     const { user } = useAuth();
     const API_URL = 'http://localhost:5000';
     const [content, setContent] = useState('');
@@ -28,28 +34,61 @@ const CreatePost = ({ onPostCreated }: { onPostCreated: () => void }) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        const formData = new FormData();
-        formData.append('content', content);
-        if (image) {
-            formData.append('image', image);
-        }
+        if (!content.trim() || !user) return;
 
-        try {
-            await api.post('/posts', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+        startTransition(async () => {
+            const optimisticId = `temp-${Date.now()}`;
+            const optimisticPost = {
+                _id: optimisticId,
+                content,
+                imageUrl: preview, // Use local blob URL for optimistic image
+                author: {
+                    _id: user._id,
+                    username: user.username,
+                    avatarUrl: user.avatarUrl,
+                },
+                likes: [],
+                createdAt: new Date().toISOString(),
+                isOptimistic: true, // Marker for styling if needed
+            };
+
+            // Trigger optimistic action
+            if (addOptimisticAction) {
+                addOptimisticAction({ type: 'add', payload: optimisticPost });
+            }
+
+            const formData = new FormData();
+            formData.append('content', content);
+            if (image) {
+                formData.append('image', image);
+            }
+
+            const previousContent = content;
+            const previousPreview = preview;
+            const previousImage = image;
+
             setContent('');
             setImage(null);
             setPreview(null);
-            toast.success('Post created!');
-            onPostCreated();
-        } catch (error) {
-            console.error('Failed to create post', error);
-            toast.error('Failed to create post');
-        } finally {
-            setLoading(false);
-        }
+            setLoading(true);
+
+            try {
+                const response = await api.post('/posts', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                toast.success('Post created!');
+                onPostCreated(response.data);
+            } catch (error) {
+                console.error('Failed to create post', error);
+                toast.error('Failed to create post');
+                // Rollback local form state
+                setContent(previousContent);
+                setPreview(previousPreview);
+                setImage(previousImage);
+            } finally {
+                setLoading(false);
+            }
+        });
     };
 
     return (
