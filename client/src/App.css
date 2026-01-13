@@ -1122,3 +1122,51 @@ body {
     padding: 14px;
   }
 }
+
+/* Global Error Boundary Styles */
+.global-error-boundary {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-color);
+  padding: 20px;
+}
+
+.error-boundary-content {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.error-details-dropdown {
+  width: 100%;
+  margin-top: 20px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-family: 'Fira Code', 'Roboto Mono', monospace;
+  border: 1px solid var(--border-color);
+}
+
+.error-details-dropdown summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-secondary);
+  outline: none;
+  user-select: none;
+}
+
+.error-details-dropdown pre {
+  margin-top: 15px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 0.8rem;
+  color: #e74c3c;
+  max-height: 400px;
+  overflow-y: auto;
+}

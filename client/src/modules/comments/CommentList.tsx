@@ -43,6 +43,7 @@ const CommentList = ({ postId }: CommentListProps) => {
         }
     }, [postId, setComments]);
 
+
     // Use the custom useWebSocketRoom hook
     const { isConnected } = useWebSocketRoom(postId, handleWebSocketMessage);
 
