@@ -58,10 +58,10 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }, []);
 
     const sendMessage = (type: string, data: any) => {
-        if (socket && isConnected) {
+        if (socket && isConnected && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type, data }));
         } else {
-            console.warn('WebSocket not connected');
+            console.warn('WebSocket not ready to send. State:', socket?.readyState);
         }
     };
 

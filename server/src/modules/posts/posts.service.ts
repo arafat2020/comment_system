@@ -1,5 +1,6 @@
 import { Post, IPost } from './post.model';
 import { CreatePostDto } from './posts.dto';
+import { webSocketService } from '../../services/websocket.service';
 
 export class PostsService {
     async create(userId: string, createPostDto: CreatePostDto): Promise<IPost> {
@@ -9,7 +10,11 @@ export class PostsService {
             author: userId,
         });
         const savedPost = await post.save();
-        return savedPost.populate('author', 'username avatarUrl');
+        const populatedPost = await savedPost.populate('author', 'username avatarUrl');
+
+        // Broadcast new post to the feed room
+        webSocketService.broadcast('new_post', populatedPost, 'feed');
+        return populatedPost;
     }
 
     async findAll(): Promise<IPost[]> {
@@ -33,7 +38,12 @@ export class PostsService {
         if (updateData.content) post.content = updateData.content;
         if (updateData.imageUrl) post.imageUrl = updateData.imageUrl;
 
-        return await post.save();
+        const updatedPost = await post.save();
+
+        // Broadcast updated post to the feed room
+        webSocketService.broadcast('update_post', updatedPost, 'feed');
+
+        return updatedPost;
     }
 
     async delete(id: string, userId: string): Promise<void> {
@@ -42,6 +52,9 @@ export class PostsService {
         if (post.author.toString() !== userId) throw new Error('Unauthorized');
 
         await Post.findByIdAndDelete(id);
+
+        // Broadcast deleted post to the feed room
+        webSocketService.broadcast('delete_post', { id }, 'feed');
     }
 
     async toggleLike(postId: string, userId: string): Promise<IPost> {
@@ -60,6 +73,11 @@ export class PostsService {
 
         await post.save();
         // Re-populate to return updated state
-        return (await post.populate('author', 'username avatarUrl')).populate('likes', 'username');
+        const updatedPost = await (await post.populate('author', 'username avatarUrl')).populate('likes', 'username');
+
+        // Broadcast updated post (for likes) to the feed room
+        webSocketService.broadcast('update_post', updatedPost, 'feed');
+
+        return updatedPost;
     }
 }

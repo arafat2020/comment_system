@@ -1,22 +1,83 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback, useOptimistic } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PostItem from '../modules/posts/PostItem';
 import { BsCalendar3 } from 'react-icons/bs';
 import { format } from 'date-fns';
 import useFetch from '../hooks/useFetch';
+import useWebSocketRoom from '../hooks/useWebSocketRoom';
 import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
 
 const ProfilePage = () => {
     const { user } = useAuth();
     const API_URL = 'http://localhost:5000';
-    const { data: allPosts, loading, error, refetch } = useFetch<any[]>('/posts');
+    const {
+        data: allPosts,
+        loading,
+        error,
+        setData: setAllPosts,
+        refetch
+    } = useFetch<any[]>('/posts');
 
-    // Filter posts for current user
-    const posts = useMemo(() => {
-        if (!allPosts || !user) return [];
-        return allPosts.filter((p: any) => p.author._id === user._id);
-    }, [allPosts, user]);
+    // React 19 useOptimistic hook for profile posts
+    const [optimisticPosts, addOptimisticAction] = useOptimistic(
+        allPosts || [],
+        (state, action: { type: string; payload: any }) => {
+            switch (action.type) {
+                case 'like':
+                    return state.map(p => {
+                        if (p._id === action.payload.postId) {
+                            const newLikes = [...p.likes];
+                            const likeIndex = newLikes.findIndex((l: any) =>
+                                (typeof l === 'string' ? l : l._id) === action.payload.userId
+                            );
+                            if (likeIndex > -1) {
+                                newLikes.splice(likeIndex, 1);
+                            } else {
+                                newLikes.push({ _id: action.payload.userId, username: action.payload.username });
+                            }
+                            return { ...p, likes: newLikes };
+                        }
+                        return p;
+                    });
+                case 'delete':
+                    return state.filter(p => p._id !== action.payload.id);
+                case 'update':
+                    return state.map(p => p._id === action.payload._id ? { ...p, ...action.payload } : p);
+                default:
+                    return state;
+            }
+        }
+    );
+
+    const handlePostMessage = useCallback((type: string, data: any) => {
+        if (type === 'new_post') {
+            if (data.author._id === user?._id) {
+                setAllPosts(prev => {
+                    if (!prev) return [data];
+                    if (prev.find(p => p._id === data._id)) return prev;
+                    return [data, ...prev];
+                });
+            }
+        } else if (type === 'update_post') {
+            setAllPosts(prev =>
+                prev ? prev.map(p => p._id === data._id ? { ...p, ...data } : p) : prev
+            );
+        } else if (type === 'delete_post') {
+            setAllPosts(prev =>
+                prev ? prev.filter(p => p._id !== data.id) : prev
+            );
+        }
+    }, [setAllPosts, user?._id]);
+
+    // Profile feed updates
+    useWebSocketRoom('feed', handlePostMessage);
+
+    // Filter posts for current user from optimistic state
+    const filteredPosts = useMemo(() => {
+        if (!user) return [];
+        return optimisticPosts.filter((p: any) => p.author._id === user._id);
+    }, [optimisticPosts, user]);
 
     if (!user) return <div>Please login</div>;
 
@@ -46,7 +107,7 @@ const ProfilePage = () => {
                         </div>
 
                         <div className="profile-stats">
-                            <span><strong>{posts.length}</strong> Posts</span>
+                            <span><strong>{filteredPosts.length}</strong> Posts</span>
                         </div>
                     </div>
                 </div>
@@ -61,9 +122,22 @@ const ProfilePage = () => {
                     <Loader message="Loading posts..." size="small" />
                 ) : error ? (
                     <ErrorMessage message={error} title="Failed to load posts" onRetry={refetch} />
-                ) : posts.length > 0 ? (
-                    posts.map(post => (
-                        <PostItem key={post._id} post={post} />
+                ) : filteredPosts.length > 0 ? (
+                    filteredPosts.map(post => (
+                        <PostItem
+                            key={post._id}
+                            post={post}
+                            addOptimisticAction={addOptimisticAction}
+                            onUpdate={(updatedData) => setAllPosts(prev => {
+                                if (!prev) return [updatedData];
+                                const exists = prev.some(p => p._id === updatedData._id);
+                                if (exists) {
+                                    return prev.map(p => p._id === updatedData._id ? { ...p, ...updatedData } : p);
+                                }
+                                return [updatedData, ...prev];
+                            })}
+                            onDelete={(id) => setAllPosts(prev => prev ? prev.filter(p => p._id !== id) : prev)}
+                        />
                     ))
                 ) : (
                     <div className="no-posts">

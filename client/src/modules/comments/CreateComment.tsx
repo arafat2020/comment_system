@@ -1,15 +1,22 @@
-import { useState } from 'react';
+import React, { useState, startTransition } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 interface CreateCommentProps {
     postId: string;
     parentCommentId?: string;
-    onCommentCreated: () => void;
+    onCommentCreated: (newComment: any) => void;
     onCancel?: () => void;
+    addOptimisticAction?: (payload: any) => void;
 }
 
-const CreateComment = ({ postId, parentCommentId, onCommentCreated, onCancel }: CreateCommentProps) => {
+const CreateComment = ({
+    postId,
+    parentCommentId,
+    onCommentCreated,
+    onCancel,
+    addOptimisticAction
+}: CreateCommentProps) => {
     const { user } = useAuth();
     const API_URL = 'http://localhost:5000';
     const [content, setContent] = useState('');
@@ -17,21 +24,50 @@ const CreateComment = ({ postId, parentCommentId, onCommentCreated, onCancel }: 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        try {
-            await api.post('/comments', {
+        if (!content.trim() || !user) return;
+
+        startTransition(async () => {
+            const optimisticId = `temp-${Date.now()}`;
+            const optimisticComment = {
+                _id: optimisticId,
                 content,
-                postId,
-                parentCommentId,
-            });
+                post: postId,
+                author: {
+                    _id: user._id,
+                    username: user.username,
+                    avatarUrl: user.avatarUrl,
+                },
+                likes: [],
+                parentComment: parentCommentId,
+                createdAt: new Date().toISOString(),
+                isOptimistic: true,
+            };
+
+            // Trigger optimistic action
+            if (addOptimisticAction) {
+                addOptimisticAction({ type: 'add', payload: optimisticComment });
+            }
+
+            const previousContent = content;
             setContent('');
-            onCommentCreated();
-            if (onCancel) onCancel();
-        } catch (error) {
-            console.error('Failed to create comment', error);
-        } finally {
-            setLoading(false);
-        }
+            setLoading(true);
+
+            try {
+                const response = await api.post('/comments', {
+                    content: previousContent,
+                    postId,
+                    parentCommentId,
+                });
+                onCommentCreated(response.data);
+                if (onCancel) onCancel();
+            } catch (error) {
+                console.error('Failed to create comment', error);
+                // Rollback local form state
+                setContent(previousContent);
+            } finally {
+                setLoading(false);
+            }
+        });
     };
 
     return (

@@ -62,39 +62,30 @@ class ErrorBoundary extends Component<Props, State> {
 
             // Default fallback UI
             return (
-                <div style={{ padding: '20px' }}>
-                    <ErrorMessage
-                        title="Oops! Something went wrong"
-                        message={
-                            this.state.error?.message ||
-                            'An unexpected error occurred. Please try refreshing the page.'
-                        }
-                        onRetry={this.handleReset}
-                    />
+                <div className="global-error-boundary">
+                    <div className="error-boundary-content">
+                        <ErrorMessage
+                            title="Oops! Something went wrong"
+                            message={
+                                this.state.error?.message ||
+                                'An unexpected error occurred. Please try refreshing the page.'
+                            }
+                            onRetry={this.handleReset}
+                        />
 
-                    {/* Show error details in development */}
-                    {import.meta.env.DEV && this.state.error && (
-                        <details style={{
-                            marginTop: '20px',
-                            padding: '16px',
-                            backgroundColor: '#f8f9fa',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            fontFamily: 'monospace'
-                        }}>
-                            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
-                                Error Details (Development Only)
-                            </summary>
-                            <pre style={{
-                                marginTop: '12px',
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-word'
-                            }}>
-                                {this.state.error.toString()}
-                                {this.state.errorInfo?.componentStack}
-                            </pre>
-                        </details>
-                    )}
+                        {/* Show error details in development */}
+                        {import.meta.env.DEV && this.state.error && (
+                            <details className="error-details-dropdown">
+                                <summary>
+                                    Error Details (Development Only)
+                                </summary>
+                                <pre>
+                                    {this.state.error.toString()}
+                                    {this.state.errorInfo?.componentStack}
+                                </pre>
+                            </details>
+                        )}
+                    </div>
                 </div>
             );
         }
