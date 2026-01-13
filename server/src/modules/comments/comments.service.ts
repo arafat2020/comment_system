@@ -1,5 +1,6 @@
 import { Comment, IComment } from './comment.model';
 import { CreateCommentDto } from './comments.dto';
+import { webSocketService } from '../../services/websocket.service';
 
 export class CommentsService {
     async create(userId: string, createCommentDto: CreateCommentDto): Promise<IComment> {
@@ -10,7 +11,12 @@ export class CommentsService {
             parentComment: createCommentDto.parentCommentId,
         });
         const savedComment = await comment.save();
-        return savedComment.populate('author', 'username avatarUrl');
+        const populatedComment = await savedComment.populate('author', 'username avatarUrl');
+
+        // Broadcast new comment to the specific post room
+        webSocketService.broadcast('new_comment', populatedComment, populatedComment.post.toString());
+
+        return populatedComment;
     }
 
     async findByPost(postId: string): Promise<IComment[]> {
@@ -26,7 +32,12 @@ export class CommentsService {
         if (comment.author.toString() !== userId) throw new Error('Unauthorized');
 
         comment.content = content;
-        return await comment.save();
+        const updatedComment = await comment.save();
+
+        // Broadcast updated comment to the specific post room
+        webSocketService.broadcast('update_comment', updatedComment, updatedComment.post.toString());
+
+        return updatedComment;
     }
 
     async delete(id: string, userId: string): Promise<void> {
@@ -34,7 +45,11 @@ export class CommentsService {
         if (!comment) throw new Error('Comment not found');
         if (comment.author.toString() !== userId) throw new Error('Unauthorized');
 
+        const postId = comment.post.toString();
         await this.deleteRecursive(id);
+
+        // Broadcast deleted comment to the specific post room
+        webSocketService.broadcast('delete_comment', { id }, postId);
     }
 
     private async deleteRecursive(commentId: string): Promise<void> {
@@ -60,6 +75,11 @@ export class CommentsService {
         }
 
         await comment.save();
-        return (await comment.populate('author', 'username avatarUrl')).populate('likes', 'username');
+        const updatedComment = await (await comment.populate('author', 'username avatarUrl')).populate('likes', 'username');
+
+        // Broadcast updated (liked) comment to the specific post room
+        webSocketService.broadcast('update_comment', updatedComment, updatedComment.post.toString());
+
+        return updatedComment;
     }
 }
