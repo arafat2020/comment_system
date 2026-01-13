@@ -53,14 +53,11 @@ FROM base as final
 # Use production node environment by default.
 ENV NODE_ENV production
 
-# Run the application as a non-root user.
-USER node
-
-# Copy package.json so that package manager commands can be used.
-COPY package.json .
-
 # Create uploads directory and set permissions
 RUN mkdir -p uploads && chown node:node uploads
+
+# Run the application as a non-root user.
+USER node
 
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
