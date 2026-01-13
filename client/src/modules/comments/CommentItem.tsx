@@ -1,30 +1,19 @@
 import { useState, startTransition } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { AiOutlineHeart, AiFillHeart, AiOutlineDelete, AiOutlineMessage, AiOutlineEdit } from 'react-icons/ai';
+import { AiOutlineHeart, AiFillHeart, AiOutlineDelete, AiOutlineMessage, AiOutlineEdit, AiOutlineDislike, AiFillDislike } from 'react-icons/ai';
 import api from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import CreateComment from './CreateComment';
 
-interface Comment {
-    _id: string;
-    content: string;
-    author: {
-        _id: string;
-        username: string;
-        avatarUrl?: string;
-    };
-    likes: Array<{ _id: string; username: string } | string>;
-    createdAt: string;
-    parentComment?: string;
-}
+import type { Comment, OptimisticAction } from '../../types';
 
 interface CommentItemProps {
     comment: Comment;
     allComments: Comment[];
     postId: string;
-    onUpdate: (updatedData: any) => void;
+    onUpdate: (updatedData: Comment) => void;
     onDelete: (id: string) => void;
-    addOptimisticAction?: (action: any) => void;
+    addOptimisticAction?: (action: OptimisticAction) => void;
 }
 
 const CommentItem = ({ comment, allComments, postId, onUpdate, onDelete, addOptimisticAction }: CommentItemProps) => {
@@ -37,20 +26,26 @@ const CommentItem = ({ comment, allComments, postId, onUpdate, onDelete, addOpti
     // Find replies to this comment
     const replies = allComments.filter(c => c.parentComment === comment._id);
 
-    // Check like status
-    const isLiked = user && comment.likes.some((like: any) =>
-        (typeof like === 'string' ? like : like._id) === user._id
+    const currentUserId = user?._id;
+
+    // Check like/dislike status
+    const isLiked = currentUserId && comment.likes.some((like) =>
+        (typeof like === 'string' ? like : like._id) === currentUserId
+    );
+
+    const isDisliked = currentUserId && (comment.dislikes || []).some((dislike) =>
+        (typeof dislike === 'string' ? dislike : dislike._id) === currentUserId
     );
 
     const handleLike = () => {
-        if (!user || !addOptimisticAction) return;
+        if (!user || !addOptimisticAction || !currentUserId) return;
 
         startTransition(async () => {
             addOptimisticAction({
                 type: 'like',
                 payload: {
                     commentId: comment._id,
-                    userId: user._id,
+                    userId: currentUserId,
                     username: user.username
                 }
             });
@@ -60,6 +55,28 @@ const CommentItem = ({ comment, allComments, postId, onUpdate, onDelete, addOpti
                 onUpdate(response.data);
             } catch (error) {
                 console.error('Failed to like comment', error);
+            }
+        });
+    };
+
+    const handleDislike = () => {
+        if (!user || !addOptimisticAction || !currentUserId) return;
+
+        startTransition(async () => {
+            addOptimisticAction({
+                type: 'dislike',
+                payload: {
+                    commentId: comment._id,
+                    userId: currentUserId,
+                    username: user.username
+                }
+            });
+
+            try {
+                const response = await api.put(`/comments/${comment._id}/dislike`);
+                onUpdate(response.data);
+            } catch (error) {
+                console.error('Failed to dislike comment', error);
             }
         });
     };
@@ -149,10 +166,17 @@ const CommentItem = ({ comment, allComments, postId, onUpdate, onDelete, addOpti
                             {isLiked ? <AiFillHeart /> : <AiOutlineHeart />}
                             <span>{comment.likes.length || ''}</span>
                         </button>
+                        <button
+                            className={`action-btn ${isDisliked ? 'disliked' : ''}`}
+                            onClick={handleDislike}
+                        >
+                            {isDisliked ? <AiFillDislike /> : <AiOutlineDislike />}
+                            <span>{(comment.dislikes || []).length || ''}</span>
+                        </button>
                         <button className="action-btn" onClick={() => setIsReplying(!isReplying)}>
                             <AiOutlineMessage />
                         </button>
-                        {user && user._id === comment.author._id && (
+                        {currentUserId === comment.author._id && (
                             <>
                                 <button className="action-btn" onClick={() => { setIsEditing(true); setEditContent(comment.content); }}>
                                     <AiOutlineEdit />

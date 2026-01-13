@@ -1,27 +1,19 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
-
-interface User {
-    _id: string;
-    username: string;
-    email: string;
-    avatarUrl?: string;
-}
-
-interface AuthContextType {
-    user: User | null;
-    token: string | null;
-    login: (token: string, user: User) => void;
-    logout: () => void;
-    loading: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import type { User } from '../types';
+import { AuthContext } from './AuthContextType';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [loading, setLoading] = useState(true);
+
+    const logout = useCallback(() => {
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
+        delete api.defaults.headers.common['Authorization'];
+    }, []);
 
     useEffect(() => {
         const loadUser = async () => {
@@ -30,14 +22,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                     const res = await api.get('/auth/me');
                     setUser(res.data);
-                } catch (error) {
+                } catch {
                     logout();
                 }
             }
             setLoading(false);
         };
         loadUser();
-    }, [token]);
+    }, [token, logout]);
 
     const login = (newToken: string, newUser: User) => {
         localStorage.setItem('token', newToken);
@@ -45,23 +37,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(newUser);
     };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        setToken(null);
-        setUser(null);
+    const updateUser = (userData: Partial<User>) => {
+        setUser(prev => prev ? { ...prev, ...userData } : null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, loading, updateUser }}>
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
 };

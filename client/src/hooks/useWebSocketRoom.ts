@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useWebSocket } from '../context/WebSocketContext';
+import { useWebSocket } from './useWebSocket';
 
 /**
  * Custom hook to handle WebSocket room joining and message listening
@@ -8,7 +8,7 @@ import { useWebSocket } from '../context/WebSocketContext';
  */
 export const useWebSocketRoom = (
     roomId: string,
-    onMessage: (type: string, data: any) => void
+    onMessage: (type: string, data: unknown) => void
 ) => {
     const { socket, isConnected, sendMessage } = useWebSocket();
 
@@ -16,7 +16,7 @@ export const useWebSocketRoom = (
         if (isConnected && roomId) {
             sendMessage('join_room', { roomId });
         }
-    }, [roomId, isConnected]);
+    }, [roomId, isConnected, sendMessage]);
 
     useEffect(() => {
         if (!socket) return;

@@ -1,13 +1,16 @@
-import React, { useState, startTransition } from 'react';
+import React from 'react';
+import { useState, startTransition } from 'react';
 import api from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
+
+import type { Comment, OptimisticAction } from '../../types';
 
 interface CreateCommentProps {
     postId: string;
     parentCommentId?: string;
-    onCommentCreated: (newComment: any) => void;
+    onCommentCreated: (newComment: Comment) => void;
     onCancel?: () => void;
-    addOptimisticAction?: (payload: any) => void;
+    addOptimisticAction?: (action: OptimisticAction) => void;
 }
 
 const CreateComment = ({
@@ -28,16 +31,17 @@ const CreateComment = ({
 
         startTransition(async () => {
             const optimisticId = `temp-${Date.now()}`;
-            const optimisticComment = {
+            const optimisticComment: Comment = {
                 _id: optimisticId,
                 content,
-                post: postId,
+                postId: postId,
                 author: {
                     _id: user._id,
                     username: user.username,
                     avatarUrl: user.avatarUrl,
                 },
                 likes: [],
+                dislikes: [],
                 parentComment: parentCommentId,
                 createdAt: new Date().toISOString(),
                 isOptimistic: true,

@@ -3,7 +3,7 @@ import api from '../services/api';
 
 interface UseFetchOptions {
     initialFetch?: boolean; // Whether to fetch on mount
-    dependencies?: any[]; // Dependencies to refetch
+    dependencies?: unknown[]; // Dependencies to refetch
 }
 
 interface UseFetchReturn<T> {
@@ -23,7 +23,7 @@ interface UseFetchReturn<T> {
  * @example
  * const { data: posts, loading, error, refetch } = useFetch<Post[]>('/posts');
  */
-function useFetch<T = any>(
+function useFetch<T = unknown>(
     endpoint: string,
     options: UseFetchOptions = {}
 ): UseFetchReturn<T> {
@@ -53,6 +53,7 @@ function useFetch<T = any>(
         if (initialFetch) {
             fetchData();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fetchData, initialFetch, ...dependencies]);
 
     return {

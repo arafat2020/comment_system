@@ -1,5 +1,4 @@
-import './Loader.css';
-
+import './Loader.scss';
 interface LoaderProps {
     message?: string;
     size?: 'small' | 'medium' | 'large';

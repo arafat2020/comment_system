@@ -1,10 +1,11 @@
-import { useMemo, useCallback, useOptimistic, useState } from 'react';
-import useFetch from '../../hooks/useFetch';
+import { useMemo, useCallback, useOptimistic, useState, useEffect } from 'react';
+import api from '../../services/api';
 import useWebSocketRoom from '../../hooks/useWebSocketRoom';
 import CreateComment from './CreateComment';
 import CommentItem from './CommentItem';
 import Loader from '../../components/Loader';
 import ErrorMessage from '../../components/ErrorMessage';
+import type { Comment, OptimisticAction } from '../../types';
 
 interface CommentListProps {
     postId: string;
@@ -13,55 +14,112 @@ interface CommentListProps {
 const CommentList = ({ postId }: CommentListProps) => {
     const [sortBy, setSortBy] = useState<'newest' | 'liked'>('newest');
 
-    const {
-        data: comments,
-        loading,
-        error,
-        setData: setComments,
-        refetch
-    } = useFetch<any[]>(`/comments/${postId}`);
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchComments = useCallback(async (pageNum: number, isLoadMore = false) => {
+        if (isLoadMore) setLoadingMore(true);
+        else setLoading(true);
+        setError(null);
+
+        try {
+            const response = await api.get(`/comments/${postId}?page=${pageNum}&limit=10`);
+            const { comments: newComments, totalPages: total } = response.data;
+
+            setComments((prev: Comment[]) => isLoadMore ? [...prev, ...newComments] : newComments);
+            setTotalPages(total);
+            setPage(pageNum);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to fetch comments');
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    }, [postId]);
+
+    useEffect(() => {
+        fetchComments(1);
+    }, [fetchComments]);
 
     // Manage room connection state for UI feedback
-    const handleCommentMessage = useCallback((type: string, data: any) => {
+    const handleCommentMessage = useCallback((type: string, data: unknown) => {
         if (type === 'new_comment') {
-            setComments(prev => {
-                if (!prev) return [data];
-                if (prev.find(c => c._id === data._id)) return prev;
-                return [data, ...prev];
+            const newComment = data as Comment;
+            setComments((prev: Comment[]) => {
+                if (prev.find(c => c._id === newComment._id)) return prev;
+                return [newComment, ...prev];
             });
         } else if (type === 'update_comment') {
-            setComments(prev =>
-                prev ? prev.map(c => c._id === data._id ? { ...c, ...data } : c) : prev
+            const updatedComment = data as Comment;
+            setComments((prev: Comment[]) =>
+                prev.map(c => c._id === updatedComment._id ? { ...c, ...updatedComment } : c)
             );
         } else if (type === 'delete_comment') {
-            setComments(prev =>
-                prev ? prev.filter(c => c._id !== data.id) : prev
+            const deleteData = data as { id: string };
+            setComments((prev: Comment[]) =>
+                prev.filter(c => c._id !== deleteData.id)
             );
         }
-    }, [setComments]);
+    }, []);
 
     const { isConnected } = useWebSocketRoom(`post_${postId}`, handleCommentMessage);
 
     // React 19 useOptimistic for comments
     const [optimisticComments, addOptimisticAction] = useOptimistic(
         comments || [],
-        (state, action: { type: string; payload: any }) => {
+        (state: Comment[], action: OptimisticAction) => {
             switch (action.type) {
                 case 'add':
-                    return [action.payload, ...state];
+                    return [action.payload as Comment, ...state];
                 case 'like':
                     return state.map(c => {
                         if (c._id === action.payload.commentId) {
                             const newLikes = [...c.likes];
-                            const likeIndex = newLikes.findIndex((l: any) =>
+                            const likeIndex = newLikes.findIndex((l) =>
                                 (typeof l === 'string' ? l : l._id) === action.payload.userId
                             );
+                            const newDislikes = [...(c.dislikes || [])];
+                            const dislikeIndex = newDislikes.findIndex((d) =>
+                                (typeof d === 'string' ? d : d._id) === action.payload.userId
+                            );
+
                             if (likeIndex > -1) {
                                 newLikes.splice(likeIndex, 1);
                             } else {
                                 newLikes.push({ _id: action.payload.userId, username: action.payload.username });
+                                if (dislikeIndex > -1) {
+                                    newDislikes.splice(dislikeIndex, 1);
+                                }
                             }
-                            return { ...c, likes: newLikes };
+                            return { ...c, likes: newLikes, dislikes: newDislikes };
+                        }
+                        return c;
+                    });
+                case 'dislike':
+                    return state.map(c => {
+                        if (c._id === action.payload.commentId) {
+                            const newDislikes = [...(c.dislikes || [])];
+                            const dislikeIndex = newDislikes.findIndex((d) =>
+                                (typeof d === 'string' ? d : d._id) === action.payload.userId
+                            );
+                            const newLikes = [...c.likes];
+                            const likeIndex = newLikes.findIndex((l) =>
+                                (typeof l === 'string' ? l : l._id) === action.payload.userId
+                            );
+
+                            if (dislikeIndex > -1) {
+                                newDislikes.splice(dislikeIndex, 1);
+                            } else {
+                                newDislikes.push({ _id: action.payload.userId, username: action.payload.username });
+                                if (likeIndex > -1) {
+                                    newLikes.splice(likeIndex, 1);
+                                }
+                            }
+                            return { ...c, likes: newLikes, dislikes: newDislikes };
                         }
                         return c;
                     });
@@ -88,14 +146,14 @@ const CommentList = ({ postId }: CommentListProps) => {
 
     const rootComments = sortedComments.filter(c => !c.parentComment);
 
-    if (loading) return <Loader message="Loading comments..." size="small" />;
-    if (error) return <ErrorMessage message={error} title="Failed to load comments" onRetry={refetch} />;
+    if (loading && page === 1) return <Loader message="Loading comments..." size="small" />;
+    if (error) return <ErrorMessage message={error} title="Failed to load comments" onRetry={() => fetchComments(1)} />;
 
     return (
         <div className="comments-section">
             <div className="comments-header">
                 <div className="comments-status">
-                    <h3>Comments ({optimisticComments.length})</h3>
+                    <h3>Comments ({comments.length})</h3>
                     <span
                         className={`status-dot ${isConnected ? 'online' : 'offline'}`}
                         title={isConnected ? 'Real-time connected' : 'Disconnected'}
@@ -121,7 +179,6 @@ const CommentList = ({ postId }: CommentListProps) => {
                 postId={postId}
                 onCommentCreated={(newComment) => {
                     setComments(prev => {
-                        if (!prev) return [newComment];
                         if (prev.some(c => c._id === newComment._id)) return prev;
                         return [newComment, ...prev];
                     });
@@ -137,17 +194,28 @@ const CommentList = ({ postId }: CommentListProps) => {
                         allComments={sortedComments}
                         postId={postId}
                         onUpdate={(updatedData) => setComments(prev => {
-                            if (!prev) return [updatedData];
                             const exists = prev.some(c => c._id === updatedData._id);
                             if (exists) {
                                 return prev.map(c => c._id === updatedData._id ? { ...c, ...updatedData } : c);
                             }
                             return [updatedData, ...prev];
                         })}
-                        onDelete={(id) => setComments(prev => prev ? prev.filter(c => c._id !== id) : prev)}
+                        onDelete={(id) => setComments(prev => prev.filter(c => c._id !== id))}
                         addOptimisticAction={addOptimisticAction}
                     />
                 ))}
+
+                {page < totalPages && (
+                    <div className="load-more-container">
+                        <button
+                            className="load-more-btn"
+                            onClick={() => fetchComments(page + 1, true)}
+                            disabled={loadingMore}
+                        >
+                            {loadingMore ? 'Loading...' : 'Load More'}
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
