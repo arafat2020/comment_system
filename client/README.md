@@ -27,6 +27,19 @@ A high-fidelity client built with React 19, focusing on visual excellence and ze
 - **Modular Edit UI**: A sophisticated in-place comment editor in `CommentItem.tsx` that uses auto-expanding textareas and blends seamlessly with the dark theme.
 - **Real-time Navigation**: Sidebar with active link detection and user identity integration.
 
+## 🔄 Workflow: Optimistic Lifecycle
+
+The application implements a high-performance optimistic update pattern to ensure the UI feels instantaneous.
+
+1.  **User Trigger**: An action (like, delete, edit) is initiated by the user.
+2.  **Optimistic Dispatch**: The component calls `addOptimisticAction` wrapped in `startTransition`.
+3.  **Immediate UI Update**: React immediately updates the UI state using the optimistic reducer, even before the API call finishes.
+4.  **Asynchronous API Call**: The actual HTTP request is sent to the backend.
+5.  **State Reconciliation**:
+    -   **Success**: The backend saves the data and broadcasts a WebSocket message. The component's local state is updated with the real data once the fetch completes or the socket event arrives.
+    -   **Failure**: If the API call fails, React automatically rolls back the optimistic change, reverting the UI to the last known valid state.
+6.  **Real-Time Sync**: Other connected clients receive the WebSocket update and synchronize their own UI state instantly.
+
 ## 🎨 Styles
 - `App.scss`: Main application layout and component specific overrides.
 - `styles/_variables.scss`: The core design tokens (colors, spacing, transitions).
