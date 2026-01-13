@@ -1,16 +1,18 @@
 import { useState, startTransition } from 'react';
 import api from '../../services/api';
 import { toast } from 'sonner';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { BsImage, BsEmojiSmile } from 'react-icons/bs';
 import { AiOutlineClose } from 'react-icons/ai';
+
+import type { Post, OptimisticAction } from '../../types';
 
 const CreatePost = ({
     onPostCreated,
     addOptimisticAction
 }: {
-    onPostCreated: (newPost: any) => void,
-    addOptimisticAction?: (payload: any) => void
+    onPostCreated: (newPost: Post) => void,
+    addOptimisticAction?: (action: OptimisticAction) => void
 }) => {
     const { user } = useAuth();
     const API_URL = 'http://localhost:5000';
@@ -41,13 +43,14 @@ const CreatePost = ({
             const optimisticPost = {
                 _id: optimisticId,
                 content,
-                imageUrl: preview, // Use local blob URL for optimistic image
+                imageUrl: preview || undefined, // Use local blob URL for optimistic image
                 author: {
                     _id: user._id,
                     username: user.username,
                     avatarUrl: user.avatarUrl,
                 },
                 likes: [],
+                dislikes: [],
                 createdAt: new Date().toISOString(),
                 isOptimistic: true, // Marker for styling if needed
             };

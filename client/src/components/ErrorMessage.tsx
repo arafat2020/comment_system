@@ -1,5 +1,5 @@
 import { AiOutlineExclamationCircle } from 'react-icons/ai';
-import './ErrorMessage.css';
+import './ErrorMessage.scss';
 
 interface ErrorMessageProps {
     message: string;

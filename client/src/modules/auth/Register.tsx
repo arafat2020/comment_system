@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'sonner';
+
+import axios from 'axios';
 
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -29,8 +31,12 @@ const Register = () => {
             login(res.data.token, res.data.user);
             toast.success('Registration successful!');
             navigate('/');
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Registration failed');
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                toast.error(err.response?.data?.message || 'Registration failed');
+            } else {
+                toast.error('Registration failed');
+            }
         }
     };
 

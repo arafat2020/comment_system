@@ -1,27 +1,16 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { AiOutlineHeart, AiFillHeart, AiOutlineComment, AiOutlineDelete } from 'react-icons/ai';
+import { AiOutlineHeart, AiFillHeart, AiOutlineComment, AiOutlineDelete, AiOutlineDislike, AiFillDislike } from 'react-icons/ai';
 import api from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { startTransition } from 'react';
 
-interface Post {
-    _id: string;
-    content: string;
-    imageUrl?: string;
-    author: {
-        _id: string;
-        username: string;
-        avatarUrl?: string;
-    };
-    likes: Array<{ _id: string; username: string } | string>;
-    createdAt: string;
-}
+import type { Post, OptimisticAction } from '../../types';
 
 interface PostItemProps {
     post: Post;
-    addOptimisticAction?: (action: any) => void;
-    onUpdate?: (updatedData: any) => void;
+    addOptimisticAction?: (action: OptimisticAction) => void;
+    onUpdate?: (updatedData: Post) => void;
     onDelete?: (id: string) => void;
 }
 
@@ -30,33 +19,58 @@ const PostItem = ({ post, addOptimisticAction, onUpdate, onDelete }: PostItemPro
     const API_URL = 'http://localhost:5000';
     const navigate = useNavigate();
 
-    const isLiked = user && post.likes.some((like: any) =>
-        (typeof like === 'string' ? like : like._id) === user._id
+    const currentUserId = user?._id;
+
+    const isLiked = currentUserId && post.likes.some((like) =>
+        (typeof like === 'string' ? like : like._id) === currentUserId
+    );
+
+    const isDisliked = currentUserId && (post.dislikes || []).some((dislike) =>
+        (typeof dislike === 'string' ? dislike : dislike._id) === currentUserId
     );
 
     const handleLike = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!user || !addOptimisticAction) return;
+        if (!user || !addOptimisticAction || !currentUserId) return;
 
         startTransition(async () => {
-            // Trigger optimistic like toggle
             addOptimisticAction({
                 type: 'like',
                 payload: {
                     postId: post._id,
-                    userId: user._id,
+                    userId: currentUserId,
                     username: user.username
                 }
             });
 
             try {
                 const response = await api.put(`/posts/${post._id}/like`);
-                // Update the real state immediately to prevent reversion when transition ends
-                if (onUpdate) {
-                    onUpdate(response.data);
-                }
+                if (onUpdate) onUpdate(response.data);
             } catch (error) {
                 console.error('Failed to like post', error);
+            }
+        });
+    };
+
+    const handleDislike = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!user || !addOptimisticAction || !currentUserId) return;
+
+        startTransition(async () => {
+            addOptimisticAction({
+                type: 'dislike',
+                payload: {
+                    postId: post._id,
+                    userId: currentUserId,
+                    username: user.username
+                }
+            });
+
+            try {
+                const response = await api.put(`/posts/${post._id}/dislike`);
+                if (onUpdate) onUpdate(response.data);
+            } catch (error) {
+                console.error('Failed to dislike post', error);
             }
         });
     };
@@ -67,11 +81,10 @@ const PostItem = ({ post, addOptimisticAction, onUpdate, onDelete }: PostItemPro
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!user || !addOptimisticAction || !onDelete) return;
+        if (!currentUserId || !addOptimisticAction || !onDelete) return;
 
         if (window.confirm('Are you sure you want to delete this post?')) {
             startTransition(async () => {
-                // Trigger optimistic delete
                 addOptimisticAction({
                     type: 'delete',
                     payload: { id: post._id }
@@ -79,7 +92,6 @@ const PostItem = ({ post, addOptimisticAction, onUpdate, onDelete }: PostItemPro
 
                 try {
                     await api.delete(`/posts/${post._id}`);
-                    // Update the real state immediately
                     onDelete(post._id);
                 } catch (error) {
                     console.error('Failed to delete post', error);
@@ -104,7 +116,7 @@ const PostItem = ({ post, addOptimisticAction, onUpdate, onDelete }: PostItemPro
                         </span>
                     </div>
                 </div>
-                {user?._id === post.author._id && (
+                {currentUserId === post.author._id && (
                     <button className="delete-post-btn" onClick={handleDelete} title="Delete post">
                         <AiOutlineDelete />
                     </button>
@@ -129,6 +141,13 @@ const PostItem = ({ post, addOptimisticAction, onUpdate, onDelete }: PostItemPro
                 >
                     {isLiked ? <AiFillHeart /> : <AiOutlineHeart />}
                     <span>{post.likes.length}</span>
+                </button>
+                <button
+                    className={`action-btn ${isDisliked ? 'disliked' : ''}`}
+                    onClick={handleDislike}
+                >
+                    {isDisliked ? <AiFillDislike /> : <AiOutlineDislike />}
+                    <span>{(post.dislikes || []).length}</span>
                 </button>
                 <Link
                     to={`/posts/${post._id}`}

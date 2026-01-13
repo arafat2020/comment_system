@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { AiOutlineHome, AiOutlineUser, AiOutlineLogin, AiOutlineLogout, AiFillHome } from 'react-icons/ai';
 import { BsTwitter } from 'react-icons/bs';
 

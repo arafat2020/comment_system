@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'sonner';
+
+import axios from 'axios';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -17,8 +19,12 @@ const Login = () => {
             login(res.data.token, res.data.user);
             toast.success('Login successful!');
             navigate('/');
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Login failed');
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                toast.error(err.response?.data?.message || 'Login failed');
+            } else {
+                toast.error('Login failed');
+            }
         }
     };
 

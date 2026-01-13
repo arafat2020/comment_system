@@ -10,7 +10,7 @@ import PostDetails from './pages/PostDetails';
 import ProfilePage from './pages/ProfilePage';
 import { Toaster } from 'sonner';
 import ErrorBoundary from './components/ErrorBoundary';
-import './App.css';
+import './App.scss';
 
 function AppContent() {
   const location = useLocation();
