@@ -9,7 +9,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const connectRef = useRef<() => void>(() => { });
 
     const connect = useCallback(() => {
-        const ws = new WebSocket('ws://localhost:5000');
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000';
+        const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
             console.log('Connected to WebSocket');
