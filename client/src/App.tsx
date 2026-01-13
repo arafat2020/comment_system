@@ -8,6 +8,7 @@ import Home from './pages/HomePage';
 import PostDetails from './pages/PostDetails';
 import ProfilePage from './pages/ProfilePage';
 import { Toaster } from 'sonner';
+import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 function AppContent() {
@@ -36,11 +37,13 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

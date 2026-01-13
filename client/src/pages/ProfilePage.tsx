@@ -1,34 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
 import PostItem from '../modules/posts/PostItem';
 import { BsCalendar3 } from 'react-icons/bs';
 import { format } from 'date-fns';
+import useFetch from '../hooks/useFetch';
+import Loader from '../components/Loader';
+import ErrorMessage from '../components/ErrorMessage';
 
 const ProfilePage = () => {
     const { user } = useAuth();
     const API_URL = 'http://localhost:5000';
-    const [posts, setPosts] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: allPosts, loading, error, refetch } = useFetch<any[]>('/posts');
 
-    useEffect(() => {
-        const fetchUserPosts = async () => {
-            if (!user) return;
-            try {
-                // Fetch all posts and filter client-side for now, or use a specific endpoint if available
-                // Assuming standard list for now, ideally backend should have /posts/user/:id
-                const res = await api.get('/posts');
-                const userPosts = res.data.filter((p: any) => p.author._id === user._id);
-                setPosts(userPosts);
-            } catch (error) {
-                console.error('Failed to fetch posts', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchUserPosts();
-    }, [user]);
+    // Filter posts for current user
+    const posts = useMemo(() => {
+        if (!allPosts || !user) return [];
+        return allPosts.filter((p: any) => p.author._id === user._id);
+    }, [allPosts, user]);
 
     if (!user) return <div>Please login</div>;
 
@@ -54,7 +42,7 @@ const ProfilePage = () => {
 
                         <div className="profile-meta">
                             <BsCalendar3 />
-                            <span>Joined {format(new Date(), 'MMMM yyyy')}</span> {/* Placeholder join date */}
+                            <span>Joined {format(new Date(), 'MMMM yyyy')}</span>
                         </div>
 
                         <div className="profile-stats">
@@ -70,7 +58,9 @@ const ProfilePage = () => {
 
             <div className="profile-feed">
                 {loading ? (
-                    <div>Loading posts...</div>
+                    <Loader message="Loading posts..." size="small" />
+                ) : error ? (
+                    <ErrorMessage message={error} title="Failed to load posts" onRetry={refetch} />
                 ) : posts.length > 0 ? (
                     posts.map(post => (
                         <PostItem key={post._id} post={post} />
