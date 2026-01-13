@@ -10,6 +10,7 @@ interface UseFetchReturn<T> {
     data: T | null;
     loading: boolean;
     error: string | null;
+    setData: React.Dispatch<React.SetStateAction<T | null>>;
     refetch: () => Promise<void>;
 }
 
@@ -58,6 +59,7 @@ function useFetch<T = any>(
         data,
         loading,
         error,
+        setData,
         refetch: fetchData,
     };
 }

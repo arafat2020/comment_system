@@ -649,6 +649,65 @@ body {
   margin-bottom: 10px;
 }
 
+/* Real-time status indicator */
+.comments-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comments-status h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.online {
+  background-color: #2ecc71;
+  box-shadow: 0 0 5px #2ecc71;
+}
+
+.status-dot.offline {
+  background-color: #95a5a6;
+}
+
+/* Sort controls */
+.sort-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.sort-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.sort-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.sort-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
 .comment-textarea {
   width: 100%;
   border: none;

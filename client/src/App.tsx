@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { WebSocketProvider } from './context/WebSocketContext';
 import Navbar from './components/Navbar';
 import Login from './modules/auth/Login';
 import Register from './modules/auth/Register';
@@ -39,9 +40,11 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <WebSocketProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </WebSocketProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
