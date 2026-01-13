@@ -56,7 +56,7 @@ const CreatePost = ({ onPostCreated }: { onPostCreated: () => void }) => {
         <div className="create-post-container">
             <div className="post-avatar">
                 <img
-                    src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.png'}
+                    src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.svg'}
                     alt="avatar"
                     className="avatar"
                 />

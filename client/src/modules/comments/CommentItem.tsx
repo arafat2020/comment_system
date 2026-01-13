@@ -75,7 +75,7 @@ const CommentItem = ({ comment, allComments, postId, onUpdate }: CommentItemProp
             <div className="comment-main">
                 <div className="comment-avatar-container">
                     <img
-                        src={comment.author.avatarUrl ? `${API_URL}${comment.author.avatarUrl}` : '/default-avatar.png'}
+                        src={comment.author.avatarUrl ? `${API_URL}${comment.author.avatarUrl}` : '/default-avatar.svg'}
                         alt="avatar"
                         className="avatar-small"
                     />

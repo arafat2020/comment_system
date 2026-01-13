@@ -47,7 +47,7 @@ const PostItem = ({ post }: { post: Post }) => {
             <div className="post-header">
                 <div className="author-info">
                     <img
-                        src={post.author.avatarUrl ? `${API_URL}${post.author.avatarUrl}` : '/default-avatar.png'}
+                        src={post.author.avatarUrl ? `${API_URL}${post.author.avatarUrl}` : '/default-avatar.svg'}
                         alt="avatar"
                         className="avatar"
                     />

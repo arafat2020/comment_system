@@ -47,7 +47,7 @@ const Navbar = () => {
             {user && (
                 <Link to="/profile" className="user-info" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <img
-                        src={user.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.png'}
+                        src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.svg'}
                         alt="avatar"
                         className="nav-avatar"
                     />

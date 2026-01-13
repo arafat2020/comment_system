@@ -39,7 +39,7 @@ const ProfilePage = () => {
                 <div className="profile-info-container">
                     <div className="profile-avatar-wrapper">
                         <img
-                            src={user.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.png'}
+                            src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.svg'}
                             alt="avatar"
                             className="profile-avatar"
                         />

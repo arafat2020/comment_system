@@ -39,7 +39,7 @@ const CreateComment = ({ postId, parentCommentId, onCommentCreated, onCancel }: 
             {/* Show avatar only for top-level comments or if desired */}
             <div className="comment-avatar">
                 <img
-                    src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.png'}
+                    src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.svg'}
                     alt="avatar"
                     className="avatar"
                 />
