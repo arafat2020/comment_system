@@ -1,31 +1,16 @@
-import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import api from '../services/api';
 import PostItem from '../modules/posts/PostItem';
 import CommentList from '../modules/comments/CommentList';
+import useFetch from '../hooks/useFetch';
+import Loader from '../components/Loader';
+import ErrorMessage from '../components/ErrorMessage';
 
 const PostDetails = () => {
     const { id } = useParams();
-    const [post, setPost] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { data: post, loading, error, refetch } = useFetch<any>(`/posts/${id}`);
 
-    useEffect(() => {
-        const fetchPost = async () => {
-            try {
-                const res = await api.get(`/posts/${id}`);
-                setPost(res.data);
-            } catch (err) {
-                setError('Post not found');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPost();
-    }, [id]);
-
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>{error}</div>;
+    if (loading) return <Loader message="Loading post..." />;
+    if (error) return <ErrorMessage message={error} title="Post not found" onRetry={refetch} />;
     if (!post) return null;
 
     return (
