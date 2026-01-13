@@ -1,14 +1,18 @@
 // Theme Colors
 $primary-color: #1d9bf0;
 $primary-hover: #1a8cd8;
-$bg-color: #000000;
-$text-color: #e7e9ea;
-$text-secondary: #71767b;
-$border-color: #2f3336;
+$bg-color: #15202b; // Twitter "Dim" style
+$text-color: #ffffff;
+$text-secondary: #8899a6;
+$border-color: #38444d;
 $error-color: #f4212e;
 $success-color: #00ba7c;
-$hover-bg: rgba(255, 255, 255, 0.1);
-$card-bg: #16181c;
+$hover-bg: rgba(29, 155, 240, 0.1);
+$card-bg: #192734;
+$icon-color: #8899a6;
+$icon-hover-bg: rgba(29, 155, 240, 0.1);
+$icon-love: #e0245e;
+$icon-love-bg: rgba(224, 36, 94, 0.1);
 
 // Spacing
 $spacing-xs: 4px;
