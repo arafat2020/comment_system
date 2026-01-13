@@ -20,11 +20,24 @@ export class CommentsService {
         return populatedComment;
     }
 
-    async findByPost(postId: string): Promise<IComment[]> {
-        return Comment.find({ post: postId })
-            .sort({ createdAt: -1 })
-            .populate('author', 'username avatarUrl')
-            .populate('likes', 'username');
+    async findByPost(postId: string, page: number = 1, limit: number = 10): Promise<{ comments: IComment[]; total: number; totalPages: number }> {
+        const skip = (page - 1) * limit;
+        const [comments, total] = await Promise.all([
+            Comment.find({ post: postId })
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate('author', 'username avatarUrl')
+                .populate('likes', 'username')
+                .populate('dislikes', 'username'),
+            Comment.countDocuments({ post: postId })
+        ]);
+
+        return {
+            comments,
+            total,
+            totalPages: Math.ceil(total / limit)
+        };
     }
 
     async update(id: string, userId: string, content: string): Promise<IComment> {
@@ -33,13 +46,20 @@ export class CommentsService {
         if (comment.author.toString() !== userId) throw new Error('Unauthorized');
 
         comment.content = content;
-        const updatedComment = await comment.save();
+        const savedComment = await comment.save();
+
+        const populatedComment = await Comment.findById(savedComment._id)
+            .populate('author', 'username avatarUrl')
+            .populate('likes', 'username')
+            .populate('dislikes', 'username');
+
+        if (!populatedComment) return savedComment;
 
         // Broadcast updated comment to the specific post room
-        const postId = updatedComment.post.toString();
-        webSocketService.broadcast('update_comment', updatedComment, `post_${postId}`);
+        const postId = populatedComment.post.toString();
+        webSocketService.broadcast('update_comment', populatedComment, `post_${postId}`);
 
-        return updatedComment;
+        return populatedComment;
     }
 
     async delete(id: string, userId: string): Promise<void> {
@@ -69,20 +89,60 @@ export class CommentsService {
         }
 
         const likeIndex = comment.likes.findIndex((id) => id.toString() === userId.toString());
+        const dislikeIndex = comment.dislikes.findIndex((id) => id.toString() === userId.toString());
 
         if (likeIndex > -1) {
             comment.likes.splice(likeIndex, 1);
         } else {
             comment.likes.push(userId as any);
+            // Mutually exclusive: remove from dislikes
+            if (dislikeIndex > -1) {
+                comment.dislikes.splice(dislikeIndex, 1);
+            }
         }
 
-        await comment.save();
-        const updatedComment = await (await comment.populate('author', 'username avatarUrl')).populate('likes', 'username');
+        const savedComment = await comment.save();
+        const updatedComment = await Comment.findById(savedComment._id)
+            .populate('author', 'username avatarUrl')
+            .populate('likes', 'username')
+            .populate('dislikes', 'username');
 
-        // Broadcast updated (liked) comment to the specific post room
-        const postId = updatedComment.post.toString();
-        webSocketService.broadcast('update_comment', updatedComment, `post_${postId}`);
+        if (updatedComment) {
+            webSocketService.broadcast('update_comment', updatedComment, `post_${updatedComment.post.toString()}`);
+            return updatedComment;
+        }
+        return savedComment;
+    }
 
-        return updatedComment;
+    async toggleDislike(commentId: string, userId: string): Promise<IComment> {
+        const comment = await Comment.findById(commentId);
+        if (!comment) {
+            throw new Error('Comment not found');
+        }
+
+        const dislikeIndex = comment.dislikes.findIndex((id) => id.toString() === userId.toString());
+        const likeIndex = comment.likes.findIndex((id) => id.toString() === userId.toString());
+
+        if (dislikeIndex > -1) {
+            comment.dislikes.splice(dislikeIndex, 1);
+        } else {
+            comment.dislikes.push(userId as any);
+            // Mutually exclusive: remove from likes
+            if (likeIndex > -1) {
+                comment.likes.splice(likeIndex, 1);
+            }
+        }
+
+        const savedComment = await comment.save();
+        const updatedComment = await Comment.findById(savedComment._id)
+            .populate('author', 'username avatarUrl')
+            .populate('likes', 'username')
+            .populate('dislikes', 'username');
+
+        if (updatedComment) {
+            webSocketService.broadcast('update_comment', updatedComment, `post_${updatedComment.post.toString()}`);
+            return updatedComment;
+        }
+        return savedComment;
     }
 }

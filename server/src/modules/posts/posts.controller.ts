@@ -18,8 +18,22 @@ export class PostsController {
 
     static async findAll(req: Request, res: Response) {
         try {
-            const posts = await postsService.findAll();
-            res.status(200).json(posts);
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const result = await postsService.findAll(page, limit);
+            res.status(200).json(result);
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async findByUser(req: Request, res: Response) {
+        try {
+            const { userId } = req.params as { userId: string };
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const result = await postsService.findByUser(userId, page, limit);
+            res.status(200).json(result);
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -64,6 +78,17 @@ export class PostsController {
             const userId = (req as any).user.id;
             const { id } = req.params as { id: string };
             const post = await postsService.toggleLike(id, userId);
+            res.status(200).json(post);
+        } catch (error) {
+            res.status(400).json({ message: (error as Error).message });
+        }
+    }
+
+    static async dislike(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user.id;
+            const { id } = req.params as { id: string };
+            const post = await postsService.toggleDislike(id, userId);
             res.status(200).json(post);
         } catch (error) {
             res.status(400).json({ message: (error as Error).message });

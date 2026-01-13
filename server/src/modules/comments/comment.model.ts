@@ -6,6 +6,7 @@ export interface IComment extends Document {
     post: mongoose.Types.ObjectId;
     parentComment?: mongoose.Types.ObjectId;
     likes: mongoose.Types.ObjectId[];
+    dislikes: mongoose.Types.ObjectId[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -17,6 +18,7 @@ const CommentSchema: Schema = new Schema(
         post: { type: Schema.Types.ObjectId, ref: 'Post', required: true },
         parentComment: { type: Schema.Types.ObjectId, ref: 'Comment' }, // For nesting/replies
         likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+        dislikes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     },
     { timestamps: true }
 );

@@ -11,5 +11,6 @@ router.get('/:postId', CommentsController.findByPost);
 router.put('/:id', authGuard, CommentsController.update);
 router.delete('/:id', authGuard, CommentsController.delete);
 router.put('/:id/like', authGuard, CommentsController.like);
+router.put('/:id/dislike', authGuard, CommentsController.dislike);
 
 export default router;
