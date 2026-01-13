@@ -669,7 +669,8 @@ body {
         justify-content: flex-end;
         gap: 10px;
 
-        .reply-btn {
+        .reply-btn,
+        .save-btn {
           background-color: $primary-color;
           color: white;
           border: none;
@@ -692,16 +693,80 @@ body {
 
         .cancel-btn {
           background: transparent;
-          border: none;
+          border: 1px solid $border-color;
           color: $text-color;
           font-weight: 600;
           cursor: pointer;
           padding: 8px $spacing-lg;
           border-radius: $border-radius-pill;
+          transition: $transition-base;
 
           &:hover {
             background-color: rgba($text-color, 0.1);
           }
+        }
+      }
+    }
+  }
+
+  /* Edit Comment Form Styling */
+  .edit-comment-form {
+    margin-top: 10px;
+    padding: $spacing-md;
+    background-color: rgba($text-color, 0.02);
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+
+    .comment-textarea {
+      width: 100%;
+      border: none;
+      resize: none;
+      font-size: 1rem;
+      outline: none;
+      font-family: inherit;
+      color: $text-color;
+      background: transparent;
+      min-height: 24px;
+      margin-bottom: 10px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid $border-color;
+
+      .save-btn {
+        background-color: $primary-color;
+        color: white;
+        border: none;
+        padding: 6px 16px;
+        border-radius: $border-radius-pill;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: $transition-base;
+
+        &:hover {
+          background-color: $primary-hover;
+        }
+      }
+
+      .cancel-btn {
+        background: transparent;
+        border: 1px solid $border-color;
+        color: $text-secondary;
+        padding: 6px 16px;
+        border-radius: $border-radius-pill;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: $transition-base;
+
+        &:hover {
+          background-color: rgba($text-color, 0.1);
+          color: $text-color;
         }
       }
     }

@@ -10,9 +10,11 @@ const router = Router();
 
 router.post('/', authGuard, upload.single('image'), validationMiddleware(CreatePostDto), PostsController.create);
 router.get('/', PostsController.findAll);
+router.get('/user/:userId', PostsController.findByUser);
 router.get('/:id', PostsController.findOne);
 router.put('/:id', authGuard, upload.single('image'), PostsController.update);
 router.delete('/:id', authGuard, PostsController.delete);
 router.put('/:id/like', authGuard, PostsController.like);
+router.put('/:id/dislike', authGuard, PostsController.dislike);
 
 export default router;

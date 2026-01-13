@@ -149,9 +149,9 @@ const CommentItem = ({ comment, allComments, postId, onUpdate, onDelete, addOpti
                                 className="comment-textarea"
                                 rows={1}
                             />
-                            <div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: '5px' }}>
+                            <div className="form-actions">
                                 <button onClick={() => setIsEditing(false)} className="cancel-btn">Cancel</button>
-                                <button onClick={handleEdit} className="reply-btn">Save</button>
+                                <button onClick={handleEdit} className="save-btn">Save</button>
                             </div>
                         </div>
                     ) : (
