@@ -5,13 +5,16 @@ import helmet from 'helmet';
 import mongoose from 'mongoose';
 import { json, urlencoded } from 'express';
 import path from 'path';
+import http from 'http';
 import authRoutes from './modules/auth/auth.routes';
 import postsRoutes from './modules/posts/posts.routes';
 import commentsRoutes from './modules/comments/comments.routes';
 import fs from 'fs';
+import { webSocketService } from './services/websocket.service';
 
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
 // Ensure uploads directory exists
@@ -55,7 +58,11 @@ app.get('/', (req, res) => {
 // Start Server
 const start = async () => {
     await connectDB();
-    app.listen(PORT, () => {
+
+    // Initialize WebSockets
+    webSocketService.init(server);
+
+    server.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
 };
