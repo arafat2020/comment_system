@@ -422,6 +422,27 @@ body {
   }
 }
 
+/* Home Container */
+.home-container {
+  width: 100%;
+}
+
+.feed {
+  width: 100%;
+}
+
+.empty-feed {
+  padding: 80px 30px;
+  text-align: center;
+  color: $text-secondary;
+  font-size: 1.1rem;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.5;
+}
+
 /* Feed & Posts */
 .post-item {
   padding: $spacing-md $spacing-lg;

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { AiOutlineHeart, AiFillHeart, AiOutlineComment, AiOutlineDelete, AiOutlineDislike, AiFillDislike } from 'react-icons/ai';
-import api from '../../services/api';
+import api, { IMAGE_BASE_URL } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 import { startTransition } from 'react';
 
@@ -16,7 +16,6 @@ interface PostItemProps {
 
 const PostItem = ({ post, addOptimisticAction, onUpdate, onDelete }: PostItemProps) => {
     const { user } = useAuth();
-    const API_URL = 'http://localhost:5000';
     const navigate = useNavigate();
 
     const currentUserId = user?._id;
@@ -105,7 +104,7 @@ const PostItem = ({ post, addOptimisticAction, onUpdate, onDelete }: PostItemPro
             <div className="post-header">
                 <div className="author-info">
                     <img
-                        src={post.author.avatarUrl ? `${API_URL}${post.author.avatarUrl}` : '/default-avatar.svg'}
+                        src={post.author.avatarUrl ? `${IMAGE_BASE_URL}${post.author.avatarUrl}` : '/default-avatar.svg'}
                         alt="avatar"
                         className="avatar"
                     />
@@ -127,7 +126,7 @@ const PostItem = ({ post, addOptimisticAction, onUpdate, onDelete }: PostItemPro
                 <p>{post.content}</p>
                 {post.imageUrl && (
                     <img
-                        src={`${API_URL}${post.imageUrl}`}
+                        src={`${IMAGE_BASE_URL}${post.imageUrl}`}
                         alt="post content"
                         className="post-image"
                     />

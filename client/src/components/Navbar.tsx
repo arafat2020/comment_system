@@ -2,10 +2,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { AiOutlineHome, AiOutlineUser, AiOutlineLogin, AiOutlineLogout, AiFillHome } from 'react-icons/ai';
 import { BsTwitter } from 'react-icons/bs';
+import { IMAGE_BASE_URL } from '../services/api';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
-    const API_URL = 'http://localhost:5000';
     const location = useLocation();
 
     return (
@@ -47,7 +47,7 @@ const Navbar = () => {
             {user && (
                 <Link to="/profile" className="user-info" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <img
-                        src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.svg'}
+                        src={user?.avatarUrl ? `${IMAGE_BASE_URL}${user.avatarUrl}` : '/default-avatar.svg'}
                         alt="avatar"
                         className="nav-avatar"
                     />

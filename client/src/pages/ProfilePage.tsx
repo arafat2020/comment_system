@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import PostItem from '../modules/posts/PostItem';
 import { BsCalendar3 } from 'react-icons/bs';
 import { format } from 'date-fns';
-import api from '../services/api';
+import api, { IMAGE_BASE_URL } from '../services/api';
 import useWebSocketRoom from '../hooks/useWebSocketRoom';
 import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
@@ -11,7 +11,6 @@ import type { Post, OptimisticAction } from '../types';
 
 const ProfilePage = () => {
     const { user } = useAuth();
-    const API_URL = 'http://localhost:5000';
     const [posts, setPosts] = useState<Post[]>([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -150,7 +149,7 @@ const ProfilePage = () => {
                 <div className="profile-info-container">
                     <div className="profile-avatar-wrapper">
                         <img
-                            src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.svg'}
+                            src={user?.avatarUrl ? `${IMAGE_BASE_URL}${user.avatarUrl}` : '/default-avatar.svg'}
                             alt="avatar"
                             className="profile-avatar"
                         />
@@ -205,7 +204,6 @@ const ProfilePage = () => {
                         {page < totalPages && (
                             <div className="load-more-container">
                                 <button
-                                    className="load-more-btn"
                                     onClick={handleLoadMore}
                                     disabled={loadingMore}
                                 >

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, startTransition } from 'react';
-import api from '../../services/api';
+import api, { IMAGE_BASE_URL } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 
 import type { Comment, OptimisticAction } from '../../types';
@@ -21,7 +21,6 @@ const CreateComment = ({
     addOptimisticAction
 }: CreateCommentProps) => {
     const { user } = useAuth();
-    const API_URL = 'http://localhost:5000';
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -79,7 +78,7 @@ const CreateComment = ({
             {/* Show avatar only for top-level comments or if desired */}
             <div className="comment-avatar">
                 <img
-                    src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.svg'}
+                    src={user?.avatarUrl ? `${IMAGE_BASE_URL}${user.avatarUrl}` : '/default-avatar.svg'}
                     alt="avatar"
                     className="avatar"
                 />

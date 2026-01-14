@@ -1,7 +1,7 @@
 import { useState, startTransition } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { AiOutlineHeart, AiFillHeart, AiOutlineDelete, AiOutlineMessage, AiOutlineEdit, AiOutlineDislike, AiFillDislike } from 'react-icons/ai';
-import api from '../../services/api';
+import api, { IMAGE_BASE_URL } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 import CreateComment from './CreateComment';
 
@@ -18,7 +18,6 @@ interface CommentItemProps {
 
 const CommentItem = ({ comment, allComments, postId, onUpdate, onDelete, addOptimisticAction }: CommentItemProps) => {
     const { user } = useAuth();
-    const API_URL = 'http://localhost:5000';
     const [isReplying, setIsReplying] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(comment.content);
@@ -121,7 +120,7 @@ const CommentItem = ({ comment, allComments, postId, onUpdate, onDelete, addOpti
             <div className="comment-main">
                 <div className="comment-avatar-container">
                     <img
-                        src={comment.author.avatarUrl ? `${API_URL}${comment.author.avatarUrl}` : '/default-avatar.svg'}
+                        src={comment.author.avatarUrl ? `${IMAGE_BASE_URL}${comment.author.avatarUrl}` : '/default-avatar.svg'}
                         alt="avatar"
                         className="avatar-small"
                     />
