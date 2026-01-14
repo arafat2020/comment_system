@@ -3,7 +3,6 @@ import api from '../../services/api';
 import useWebSocketRoom from '../../hooks/useWebSocketRoom';
 import CreateComment from './CreateComment';
 import CommentItem from './CommentItem';
-import Loader from '../../components/Loader';
 import ErrorMessage from '../../components/ErrorMessage';
 import type { Comment, OptimisticAction } from '../../types';
 
@@ -146,7 +145,6 @@ const CommentList = ({ postId }: CommentListProps) => {
 
     const rootComments = sortedComments.filter(c => !c.parentComment);
 
-    if (loading && page === 1) return <Loader message="Loading comments..." size="small" />;
     if (error) return <ErrorMessage message={error} title="Failed to load comments" onRetry={() => fetchComments(1)} />;
 
     return (
