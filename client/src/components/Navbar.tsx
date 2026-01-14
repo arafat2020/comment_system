@@ -1,17 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { AiOutlineHome, AiOutlineUser, AiOutlineLogin, AiOutlineLogout, AiFillHome } from 'react-icons/ai';
-import { BsTwitter } from 'react-icons/bs';
+import { HiSparkles } from 'react-icons/hi2';
+import { IMAGE_BASE_URL } from '../services/api';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
-    const API_URL = 'http://localhost:5000';
     const location = useLocation();
 
     return (
         <nav className="navbar">
             <div className="navbar-logo">
-                <Link to="/"><BsTwitter size={30} /></Link>
+                <Link to="/"><HiSparkles size={30} /></Link>
             </div>
             <div className="navbar-links">
                 <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
@@ -47,7 +47,7 @@ const Navbar = () => {
             {user && (
                 <Link to="/profile" className="user-info" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <img
-                        src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.svg'}
+                        src={user?.avatarUrl ? `${IMAGE_BASE_URL}${user.avatarUrl}` : '/default-avatar.svg'}
                         alt="avatar"
                         className="nav-avatar"
                     />

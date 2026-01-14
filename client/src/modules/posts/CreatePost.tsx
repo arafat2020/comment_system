@@ -1,5 +1,5 @@
 import { useState, startTransition } from 'react';
-import api from '../../services/api';
+import api, { IMAGE_BASE_URL } from '../../services/api';
 import { toast } from 'sonner';
 import { useAuth } from '../../hooks/useAuth';
 import { BsImage, BsEmojiSmile } from 'react-icons/bs';
@@ -15,7 +15,6 @@ const CreatePost = ({
     addOptimisticAction?: (action: OptimisticAction) => void
 }) => {
     const { user } = useAuth();
-    const API_URL = 'http://localhost:5000';
     const [content, setContent] = useState('');
     const [image, setImage] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -98,7 +97,7 @@ const CreatePost = ({
         <div className="create-post-container">
             <div className="post-avatar">
                 <img
-                    src={user?.avatarUrl ? `${API_URL}${user.avatarUrl}` : '/default-avatar.svg'}
+                    src={user?.avatarUrl ? `${IMAGE_BASE_URL}${user.avatarUrl}` : '/default-avatar.svg'}
                     alt="avatar"
                     className="avatar"
                 />
