@@ -46,7 +46,6 @@ const ProfilePage = () => {
         }
     }, [fetchUserPosts, user?._id]);
 
-    // React 19 useOptimistic hook for profile posts
     const [optimisticPosts, addOptimisticAction] = useOptimistic(
         posts,
         (state: Post[], action: OptimisticAction) => {
@@ -131,7 +130,6 @@ const ProfilePage = () => {
         }
     }, [user?._id]);
 
-    // Profile feed updates
     useWebSocketRoom('feed', handlePostMessage);
 
     const handleLoadMore = () => {

@@ -17,7 +17,6 @@ const PostDetails = () => {
         refetch
     } = useFetch<Post>(`/posts/${id}`);
 
-    // React 19 useOptimistic for post like toggle in detail view
     const [optimisticPost, addOptimisticAction] = useOptimistic<Post | null, OptimisticAction>(
         post,
         (state, action) => {

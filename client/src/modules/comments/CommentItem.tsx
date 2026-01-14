@@ -22,12 +22,10 @@ const CommentItem = ({ comment, allComments, postId, onUpdate, onDelete, addOpti
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(comment.content);
 
-    // Find replies to this comment
     const replies = allComments.filter(c => c.parentComment === comment._id);
 
     const currentUserId = user?._id;
 
-    // Check like/dislike status
     const isLiked = currentUserId && comment.likes.some((like) =>
         (typeof like === 'string' ? like : like._id) === currentUserId
     );

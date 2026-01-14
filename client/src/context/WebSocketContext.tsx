@@ -26,10 +26,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setIsConnected(false);
             setSocket(null);
 
-            // Reconnect logic
             reconnectTimeoutRef.current = setTimeout(() => {
                 console.log('Attempting to reconnect...');
-                // We use connectRef to call the latest version of connect without creating a circular dependency
                 if (connectRef.current) connectRef.current();
             }, 3000);
         };

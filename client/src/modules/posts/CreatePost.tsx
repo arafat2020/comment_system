@@ -54,7 +54,6 @@ const CreatePost = ({
                 isOptimistic: true, // Marker for styling if needed
             };
 
-            // Trigger optimistic action
             if (addOptimisticAction) {
                 addOptimisticAction({ type: 'add', payload: optimisticPost });
             }
@@ -83,7 +82,6 @@ const CreatePost = ({
             } catch (error) {
                 console.error('Failed to create post', error);
                 toast.error('Failed to create post');
-                // Rollback local form state
                 setContent(previousContent);
                 setPreview(previousPreview);
                 setImage(previousImage);
