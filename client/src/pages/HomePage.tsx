@@ -39,7 +39,6 @@ const Home = () => {
         fetchPosts(1);
     }, [fetchPosts]);
 
-    // React 19 useOptimistic hook for post management
     const [optimisticPosts, addOptimisticAction] = useOptimistic<Post[], OptimisticAction>(
         posts,
         (state, action) => {

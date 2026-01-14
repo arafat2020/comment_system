@@ -46,7 +46,6 @@ const CreateComment = ({
                 isOptimistic: true,
             };
 
-            // Trigger optimistic action
             if (addOptimisticAction) {
                 addOptimisticAction({ type: 'add', payload: optimisticComment });
             }
@@ -65,12 +64,15 @@ const CreateComment = ({
                 if (onCancel) onCancel();
             } catch (error) {
                 console.error('Failed to create comment', error);
-                // Rollback local form state
                 setContent(previousContent);
             } finally {
                 setLoading(false);
             }
         });
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setContent(e.target.value);
     };
 
     return (
@@ -88,12 +90,7 @@ const CreateComment = ({
                 <div className="input-wrapper">
                     <textarea
                         value={content}
-                        onChange={(e) => {
-                            setContent(e.target.value);
-                            // Auto-resize
-                            e.target.style.height = 'auto';
-                            e.target.style.height = e.target.scrollHeight + 'px';
-                        }}
+                        onChange={handleChange}
                         placeholder={parentCommentId ? 'Post your reply' : 'Post your reply'}
                         required
                         className="comment-textarea"
