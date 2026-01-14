@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { AiOutlineHome, AiOutlineUser, AiOutlineLogin, AiOutlineLogout, AiFillHome } from 'react-icons/ai';
-import { BsTwitter } from 'react-icons/bs';
+import { HiSparkles } from 'react-icons/hi2';
 import { IMAGE_BASE_URL } from '../services/api';
 
 const Navbar = () => {
@@ -11,7 +11,7 @@ const Navbar = () => {
     return (
         <nav className="navbar">
             <div className="navbar-logo">
-                <Link to="/"><BsTwitter size={30} /></Link>
+                <Link to="/"><HiSparkles size={30} /></Link>
             </div>
             <div className="navbar-links">
                 <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
