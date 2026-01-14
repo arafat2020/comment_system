@@ -16,13 +16,11 @@ const CommentList = ({ postId }: CommentListProps) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchComments = useCallback(async (pageNum: number, isLoadMore = false) => {
         if (isLoadMore) setLoadingMore(true);
-        else setLoading(true);
         setError(null);
 
         try {
@@ -35,7 +33,6 @@ const CommentList = ({ postId }: CommentListProps) => {
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch comments');
         } finally {
-            setLoading(false);
             setLoadingMore(false);
         }
     }, [postId]);
