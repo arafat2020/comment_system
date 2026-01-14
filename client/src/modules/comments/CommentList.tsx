@@ -187,23 +187,29 @@ const CommentList = ({ postId }: CommentListProps) => {
             />
 
             <div className="comments-list">
-                {rootComments.map(comment => (
-                    <CommentItem
-                        key={comment._id}
-                        comment={comment}
-                        allComments={sortedComments}
-                        postId={postId}
-                        onUpdate={(updatedData) => setComments(prev => {
-                            const exists = prev.some(c => c._id === updatedData._id);
-                            if (exists) {
-                                return prev.map(c => c._id === updatedData._id ? { ...c, ...updatedData } : c);
-                            }
-                            return [updatedData, ...prev];
-                        })}
-                        onDelete={(id) => setComments(prev => prev.filter(c => c._id !== id))}
-                        addOptimisticAction={addOptimisticAction}
-                    />
-                ))}
+                {rootComments.length === 0 ? (
+                    <div className="no-comments">
+                        <p>No comments yet. Be the first to comment!</p>
+                    </div>
+                ) : (
+                    rootComments.map(comment => (
+                        <CommentItem
+                            key={comment._id}
+                            comment={comment}
+                            allComments={sortedComments}
+                            postId={postId}
+                            onUpdate={(updatedData) => setComments(prev => {
+                                const exists = prev.some(c => c._id === updatedData._id);
+                                if (exists) {
+                                    return prev.map(c => c._id === updatedData._id ? { ...c, ...updatedData } : c);
+                                }
+                                return [updatedData, ...prev];
+                            })}
+                            onDelete={(id) => setComments(prev => prev.filter(c => c._id !== id))}
+                            addOptimisticAction={addOptimisticAction}
+                        />
+                    ))
+                )}
 
                 {page < totalPages && (
                     <div className="load-more-container">

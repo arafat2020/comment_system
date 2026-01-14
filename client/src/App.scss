@@ -30,7 +30,7 @@ body {
     border-left: 1px solid $border-color;
     border-right: 1px solid $border-color;
     min-height: 100vh;
-    padding-bottom: 50vh;
+    padding-bottom: 20vh;
     background-color: $bg-color;
   }
 }
@@ -604,8 +604,17 @@ body {
 }
 
 /* Post Details Page */
-.post-details-container .post-item {
-  border-bottom: 1px solid $border-color;
+.post-details-container {
+  width: 100%;
+
+  .post-item {
+    border-bottom: 1px solid $border-color;
+    cursor: default; // Override pointer cursor on details page
+
+    &:hover {
+      background-color: transparent; // No hover effect on details page
+    }
+  }
 }
 
 /* Comments */
@@ -947,6 +956,23 @@ body {
       padding-left: 0;
       padding-top: 0;
     }
+  }
+}
+
+/* No Comments Empty State */
+.no-comments {
+  padding: 60px 30px;
+  text-align: center;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  p {
+    color: $text-secondary;
+    font-size: 1.05rem;
+    margin: 0;
+    line-height: 1.5;
   }
 }
 
