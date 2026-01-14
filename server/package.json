@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/main.js",
-    "dev": "nodemon src/main.ts",
-    "build": "tsc",
+    "start": "node init && node dist/main.js",
+    "dev": "node init && nodemon src/main.ts",
+    "build": "node init && tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
